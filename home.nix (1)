@@ -1,0 +1,51 @@
+{ config, pkgs, ... }:
+
+{
+  home.username = "karen";
+  home.homeDirectory = "/home/karen";
+  home.stateVersion = "26.05";
+
+  nixpkgs.config.allowUnfree = true;
+
+  home.packages = with pkgs; [
+    cava
+    btop
+    fastfetch
+    vlc
+    lutris
+    heroic
+    vesktop
+    pfetch-rs
+    protonplus
+    protonup-qt
+    distrobox
+    librewolf
+    localsend
+    adw-gtk3
+    croc
+    libreoffice
+    qbittorrent
+    git
+    rar
+    wget
+    virt-manager
+    
+  ];
+
+  programs.fish = {
+    enable = true;
+    interactiveShellInit = ''
+      set fish_greeting # Disable greeting
+    '';
+  };
+
+#  services.kdeconnect = {
+#    enable = true;
+#    package = pkgs.kdePackages.kdeconnect-kde; # The modern Qt6-based version
+#    indicator = true;                          # Show icon in the system tray
+#  };
+
+  targets.genericLinux.enable = true;
+
+  programs.home-manager.enable = true;
+}

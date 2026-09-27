@@ -1,0 +1,164 @@
+{ config, pkgs, ... }:
+
+{
+  imports =
+    [ # Include the results of the hardware scan.
+      ./hardware-configuration.nix
+      ./doas.nix
+      ./nvidia.nix
+      ./zapret.nix
+    ];
+
+   # Limine unutma bunu
+   boot.loader.efi.canTouchEfiVariables = true;
+   boot.loader.systemd-boot.enable = false;
+   boot.loader.limine.secureBoot.enable = true;
+   boot.loader.limine = { 
+     enable = true;
+     enrollConfig = true;
+     panicOnChecksumMismatch = true;
+     maxGenerations = 5;
+     resolution = "1920x1080";
+  
+     extraEntries = ''
+       /Windows 11
+       protocol: efi
+       path: hdd(1:1):/EFI/Microsoft/Boot/bootmgfw.efi
+    '';
+  };
+
+  boot.loader.limine.style.wallpapers = [ "${./limine-splash.png}" ];
+
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd"; # veya "lz4"
+    memoryPercent = 50; # RAM'in yüzde kaçının zram için kullanılacağını belirler
+    priority = 100;     # Takas önceliği
+  };
+
+
+  # En güncel kerneli kullan
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  systemd.services."drkonqi-coredump-processor@".enable = false;
+
+  networking.hostName = "nixos"; # Define your hostname.
+
+  # Enable networking
+  networking.networkmanager.enable = true;
+
+  # Set your time zone.
+  time.timeZone = "Europe/Istanbul";
+
+  # Select internationalisation properties.
+  i18n.defaultLocale = "en_US.UTF-8";
+
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "tr_TR.UTF-8";
+    LC_IDENTIFICATION = "tr_TR.UTF-8";
+    LC_MEASUREMENT = "tr_TR.UTF-8";
+    LC_MONETARY = "tr_TR.UTF-8";
+    LC_NAME = "tr_TR.UTF-8";
+    LC_NUMERIC = "tr_TR.UTF-8";
+    LC_PAPER = "tr_TR.UTF-8";
+    LC_TELEPHONE = "tr_TR.UTF-8";
+    LC_TIME = "tr_TR.UTF-8";
+  };
+
+  # X11
+  services.xserver.enable = false;
+
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+    settings = {
+      General = {
+      # Shows battery charge of connected devices on supported
+      # Bluetooth adapters. Defaults to 'false'.
+        Experimental = true;
+      # When enabled other devices can connect faster to us, however
+      # the tradeoff is increased power consumption. Defaults to
+      # 'false'.
+        FastConnectable = true;
+      };
+      Policy = {
+      # Enable all controllers when they are found. This includes
+      # adapters present on start as well as adapters that are plugged
+      # in later on. Defaults to 'true'.
+        AutoEnable = true;
+      };
+    };
+  };
+
+
+  # Masaüstü ortamı falan
+  services.displayManager.ly.enable = true;
+  services.desktopManager.plasma6.enable = true;
+
+  # Configure keymap in X11
+  services.xserver.xkb = {
+    layout = "tr";
+    variant = "";
+  };
+
+  # Configure console keymap
+  console.keyMap = "trq";
+
+  # Enable sound with pipewire.
+  services.pulseaudio.enable = false;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+  };
+
+  programs.fish.enable = true;
+
+  # Define a user account. Don't forget to set a password with ‘passwd’.
+  users.users."karen" = {
+    isNormalUser = true;
+    description = "CPK";
+    extraGroups = [ "networkmanager" "wheel" "libvirtd" ];
+    packages = with pkgs; [
+      kdePackages.kate
+    #  thunderbird
+   ];
+  };
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+  users.defaultUserShell = pkgs.fish;
+
+  programs.steam = {
+    enable = true; # Master switch, already covered in installation
+    remotePlay.openFirewall = true;  # Open ports in the firewall for Steam Remote Play
+    dedicatedServer.openFirewall = true; # Open ports for Source Dedicated Server hosting
+    # Other general flags if available can be set here.
+  };
+  programs.gamemode.enable = true;
+
+  environment.systemPackages = with pkgs; [
+    distroshelf
+    dualsensectl
+    efibootmgr
+    limine-full
+    sbctl
+    brave-origin
+  ];
+
+  virtualisation.libvirtd.enable = true;
+  virtualisation.spiceUSBRedirection.enable = true;
+  
+  networking.firewall = rec {
+    allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
+    allowedUDPPortRanges = allowedTCPPortRanges; # Same range for UDP discovery
+  };
+
+  system.stateVersion = "26.05"; # Did you read the comment?
+
+}

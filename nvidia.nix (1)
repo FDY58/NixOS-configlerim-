@@ -1,0 +1,22 @@
+{ config, pkgs, ... }:
+
+{
+  nixpkgs.config.allowUnfree = true;
+
+  hardware.graphics.enable = true;
+  services.xserver.videoDrivers = [ "modesetting" "nvidia" ];
+  hardware.nvidia = {
+    modesetting.enable = true;
+    open = true;
+    powerManagement.enable = true;
+    prime = {
+      offload.enable = true;
+      offload.enableOffloadCmd = true;
+      intelBusId = "PCI:0:2:0";
+      nvidiaBusId = "PCI:1:0:0";
+
+    };
+  };
+}
+
+
